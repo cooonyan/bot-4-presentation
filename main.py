@@ -1,16 +1,26 @@
-import discord, os
-from discord import app_commands
+import os, discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
 load_dotenv()
-bot = commands.Bot(command_prefix='!')
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix='#', intents=intents)
 
+async def load_cogs():
+    for filename in os.listdir('cogs'):
+        if filename.endswith('.py'):
+            extension = 'cogs.' + filename[:-3]
+            print(f"가져온 모듈 : {extension}")
+            await bot.load_extension(extension)
 
-@bot.tree.command(name='hello', description='testing')  # 명령어 이름, 설명
-@app_commands.describe(text1='쓸 내용', text2 = '번호') # 같이 쓸 내용들
-async def hello(interaction: discord.Interaction, text1:str, text2:int):    # 출력
-    await interaction.response.send_message(f'{interaction.user.mention} : {text1} : {text2}', ephemeral=True)
+@bot.event
+async def setup_hook():
+    await load_cogs()
+    await bot.tree.sync()
+
+@bot.event
+async def on_ready():
+    print(f'{bot.user}로 준비됨')
 
 
 bot.run(os.getenv('TOKEN'))
